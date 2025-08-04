@@ -43,11 +43,13 @@ def load_firm_details():
 @st.cache_data
 def load_precedent_text():
     try:
+        # This assumes you have a file named "precedent.txt" in the same directory as your script.
+        # The content of this file should be the text provided in the PDF.
         with open("precedent.txt", "r", encoding="utf-8") as f:
             content = f.read()
             return content
     except FileNotFoundError:
-        st.error("precedent.txt not found.")
+        st.error("precedent.txt not found. Please ensure the template text file is in the correct directory.")
         return ""
     except Exception as e:
         st.error(f"Error loading precedent.txt: {e}")
@@ -57,10 +59,9 @@ def get_placeholder_map(app_inputs, firm_details):
     placeholders = {
         'qu1_dispute_nature': app_inputs.get('qu1_dispute_nature', ''), 'qu2_initial_steps': app_inputs.get('qu2_initial_steps', ''),
         'qu3_timescales': app_inputs.get('qu3_timescales', ''), 'qu4_initial_costs_estimate': app_inputs.get('qu4_initial_costs_estimate', 'XX,XXX'),
-        'fee_table': app_inputs.get('fee_table', ["Fee table not provided"]), 'our_ref': str(app_inputs.get('our_ref', '')),
-        'your_ref': str(app_inputs.get('your_ref', '')), 'letter_date': str(app_inputs.get('letter_date', '')),
-        'client_name_input': str(app_inputs.get('client_name_input', '')), 'client_salutation': str(app_inputs.get('client_salutation', '')),
-        'client_address_line1': str(app_inputs.get('client_address_line1', '')),
+        'our_ref': str(app_inputs.get('our_ref', '')), 'your_ref': str(app_inputs.get('your_ref', '')), 
+        'letter_date': str(app_inputs.get('letter_date', '')), 'client_name_input': str(app_inputs.get('client_name_input', '')), 
+        'client_salutation': str(app_inputs.get('client_salutation', '')), 'client_address_line1': str(app_inputs.get('client_address_line1', '')),
         'client_address_line2_conditional': str(app_inputs.get('client_address_line2_conditional', '')),
         'client_postcode': str(app_inputs.get('client_postcode', '')), 'matter_number': str(app_inputs.get('our_ref', '')),
         'name': str(app_inputs.get('name', '')),
@@ -110,27 +111,36 @@ def generate_initial_advice_doc(app_inputs, placeholder_map):
     doc_io.seek(0)
     return doc_io
 
-def generate_fee_table(hourly_rate):
-    roles = [("Partner", hourly_rate * 1.5), ("Senior Associate", hourly_rate), ("Associate", hourly_rate * 0.8), ("Trainee", hourly_rate * 0.5)]
-    return [f"{role}: £{rate:,.2f} per hour (excl. VAT)" for role, rate in roles]
-
 def preprocess_precedent(precedent_content, app_inputs):
     logical_elements, lines, i, current_block_tag = [], precedent_content.splitlines(), 0, None
     while i < len(lines):
         line, stripped_line = lines[i], lines[i].strip()
-        match_start_tag, match_end_tag = re.match(r'\[(indiv|corp|a[1-4]|u[1-4])\]', stripped_line), re.match(r'\[/(indiv|corp|a[1-4]|u[1-4])\]', stripped_line)
-        match_heading, match_numbered_list = re.match(r'^<ins>(.*)</ins>$', stripped_line), re.match(r'^(\d+)\.\s*(.*)', stripped_line)
-        match_letter_list, match_roman_list = re.match(r'^<a>\s*(.*)', stripped_line), re.match(r'^<i>\s*(.*)', stripped_line)
+        # Ensure tags are on their own lines for this logic to work
+        match_start_tag = re.match(r'^\[(indiv|corp|a[1-4]|u[1-4])\]$', stripped_line)
+        match_end_tag = re.match(r'^\[/(indiv|corp|a[1-4]|u[1-4])\]$', stripped_line)
+        match_heading = re.match(r'^<ins>(.*)</ins>$', stripped_line)
+        match_numbered_list = re.match(r'^(\d+)\.\s*(.*)', stripped_line)
+        match_letter_list = re.match(r'^<a>\s*(.*)', stripped_line)
+        match_roman_list = re.match(r'^<i>\s*(.*)', stripped_line)
         element = None
-        if match_start_tag: current_block_tag = match_start_tag.group(1)
-        elif match_end_tag: current_block_tag = None
-        elif stripped_line == '[FEE_TABLE_PLACEHOLDER]': element = {'type': 'fee_table', 'content_lines': app_inputs['fee_table']}
-        elif match_heading: element = {'type': 'heading', 'content_lines': [match_heading.group(1)]}
-        elif match_numbered_list: element = {'type': 'numbered_list_item', 'content_lines': [match_numbered_list.group(2)]}
-        elif match_letter_list: element = {'type': 'letter_list_item', 'content_lines': [match_letter_list.group(1)]}
-        elif match_roman_list: element = {'type': 'roman_list_item', 'content_lines': [match_roman_list.group(1)]}
-        elif not stripped_line: element = {'type': 'blank_line', 'content_lines': []}
-        else: element = {'type': 'general_paragraph', 'content_lines': [line]}
+        
+        if match_start_tag:
+            current_block_tag = match_start_tag.group(1)
+        elif match_end_tag:
+            current_block_tag = None
+        elif match_heading:
+            element = {'type': 'heading', 'content_lines': [match_heading.group(1)]}
+        elif match_numbered_list:
+            element = {'type': 'numbered_list_item', 'content_lines': [match_numbered_list.group(2)]}
+        elif match_letter_list:
+            element = {'type': 'letter_list_item', 'content_lines': [match_letter_list.group(1)]}
+        elif match_roman_list:
+            element = {'type': 'roman_list_item', 'content_lines': [match_roman_list.group(1)]}
+        elif not stripped_line:
+            element = {'type': 'blank_line', 'content_lines': []}
+        else:
+            element = {'type': 'general_paragraph', 'content_lines': [line]}
+            
         if element:
             element['block_tag'] = current_block_tag
             logical_elements.append(element)
@@ -181,9 +191,14 @@ def process_precedent_text(precedent_content, app_inputs, placeholder_map):
             render_this_element = True
             tag = element.get('block_tag')
             if tag:
-                if tag in ['indiv', 'corp']: render_this_element = (tag == 'indiv' and app_inputs['client_type'] == 'Individual') or (tag == 'corp' and app_inputs['client_type'] == 'Corporate')
-                else: render_this_element = should_render_track_block(tag, app_inputs['claim_assigned'], app_inputs['selected_track'])
-            if not render_this_element: continue
+                if tag in ['indiv', 'corp']:
+                    render_this_element = (tag == 'indiv' and app_inputs['client_type'] == 'Individual') or \
+                                          (tag == 'corp' and app_inputs['client_type'] == 'Corporate')
+                else:
+                    render_this_element = should_render_track_block(tag, app_inputs['claim_assigned'], app_inputs['selected_track'])
+            
+            if not render_this_element:
+                continue
 
             content = element['content_lines'][0] if element['content_lines'] else ""
             
@@ -191,28 +206,31 @@ def process_precedent_text(precedent_content, app_inputs, placeholder_map):
                 p = doc.add_paragraph()
                 pPr = p._p.get_or_add_pPr()
                 numPr = pPr.get_or_add_numPr()
-                # These values MUST be integers, not strings. This was the final bug.
                 numPr.get_or_add_ilvl().val = level
                 numPr.get_or_add_numId().val = num_instance_id
                 add_formatted_runs(p, text, placeholder_map)
                 p.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
                 p.paragraph_format.space_after = Pt(6)
 
-            if element['type'] == 'blank_line': continue #doc.add_paragraph()
-            elif element['type'] == 'fee_table':
-                for fee_line in element['content_lines']: add_list_item(0, fee_line)
+            if element['type'] == 'blank_line':
+                # We can add a blank paragraph if desired, but often it's better to control spacing via paragraph formats
+                continue
             elif element['type'] == 'heading':
                 p = doc.add_paragraph()
                 add_formatted_runs(p, f"<ins>{content}</ins>", placeholder_map)
                 p.paragraph_format.space_before = Pt(12)
                 p.paragraph_format.space_after = Pt(6)
-            elif element['type'] == 'numbered_list_item': add_list_item(0, content)
-            elif element['type'] == 'letter_list_item': add_list_item(1, content)
-            elif element['type'] == 'roman_list_item': add_list_item(2, content)
+            elif element['type'] == 'numbered_list_item':
+                add_list_item(0, content)
+            elif element['type'] == 'letter_list_item':
+                add_list_item(1, content)
+            elif element['type'] == 'roman_list_item':
+                add_list_item(2, content)
             elif element['type'] == 'general_paragraph':
                 p = doc.add_paragraph()
                 cleaned_content = content.replace('[ind]', '').strip()
-                if '[ind]' in content: p.paragraph_format.left_indent = Cm(INDENT_FOR_IND_TAG_CM)
+                if '[ind]' in content:
+                    p.paragraph_format.left_indent = Cm(INDENT_FOR_IND_TAG_CM)
                 add_formatted_runs(p, cleaned_content, placeholder_map)
                 p.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
                 p.paragraph_format.space_after = Pt(12)
@@ -224,8 +242,10 @@ def process_precedent_text(precedent_content, app_inputs, placeholder_map):
 st.set_page_config(layout="wide", page_title="Ramsdens Client Care Letter Generator")
 st.title("Ramsdens Client Care Letter Generator")
 
-firm_details, precedent_content = load_firm_details(), load_precedent_text()
-if not precedent_content: st.stop()
+firm_details = load_firm_details()
+precedent_content = load_precedent_text()
+if not precedent_content:
+    st.stop()
 
 with st.form("input_form"):
     st.header("1. Letter & Client Details")
@@ -261,12 +281,18 @@ with st.form("input_form"):
     
     st.subheader("Estimated Initial Costs")
     hourly_rate = st.number_input("Your Hourly Rate (£)", 295)
+    
+    # Calculate the step value based on a half-hour rate
+    step_value = float(hourly_rate / 2)
+
     cost_type_is_range = st.toggle("Use a cost range", True)
     if cost_type_is_range:
-        lower_cost = st.number_input("Lower £", float(hourly_rate * 2))
-        upper_cost = st.number_input("Upper £", float(hourly_rate * 3))
+        # Add the step parameter to the number inputs
+        lower_cost = st.number_input("Lower £", float(hourly_rate * 2), step=step_value)
+        upper_cost = st.number_input("Upper £", float(hourly_rate * 3), step=step_value)
     else:
-        fixed_cost = st.number_input("Fixed cost £", float(hourly_rate * 2.5))
+        # Add the step parameter to the number input
+        fixed_cost = st.number_input("Fixed cost £", float(hourly_rate * 2.5), step=step_value)
 
     submitted = st.form_submit_button("Generate Documents")
 
@@ -275,8 +301,7 @@ if submitted:
     app_inputs = {
         'qu1_dispute_nature': sanitize_input(qu1_dispute_nature), 'qu2_initial_steps': sanitize_input(qu2_initial_steps),
         'qu3_timescales': sanitize_input(qu3_timescales), 'qu4_initial_costs_estimate': costs_text,
-        'fee_table': generate_fee_table(hourly_rate), 'client_type': client_type,
-        'claim_assigned': claim_assigned_input == "Yes", 'selected_track': selected_track,
+        'client_type': client_type, 'claim_assigned': claim_assigned_input == "Yes", 'selected_track': selected_track,
         'our_ref': sanitize_input(our_ref), 'your_ref': sanitize_input(your_ref),
         'letter_date': letter_date.strftime('%d %B %Y'), 'client_name_input': sanitize_input(client_name_input),
         'client_salutation': sanitize_input(client_salutation_name),
@@ -288,17 +313,26 @@ if submitted:
     }
     placeholder_map = get_placeholder_map(app_inputs, firm_details)
     try:
-        doc, client_care_doc_io = process_precedent_text(precedent_content, app_inputs, placeholder_map), io.BytesIO()
+        doc = process_precedent_text(precedent_content, app_inputs, placeholder_map)
+        client_care_doc_io = io.BytesIO()
         doc.save(client_care_doc_io)
         client_care_doc_io.seek(0)
+        
         advice_doc_io = generate_initial_advice_doc(app_inputs, placeholder_map)
-        client_name_safe, zip_io = re.sub(r'[^\w\s-]', '', client_name_input).strip().replace(' ', '_'), io.BytesIO()
+        
+        client_name_safe = re.sub(r'[^\w\s-]', '', client_name_input).strip().replace(' ', '_')
+        zip_io = io.BytesIO()
+        
         with zipfile.ZipFile(zip_io, 'w', zipfile.ZIP_DEFLATED) as zipf:
             zipf.writestr(f"Client_Care_Letter_{client_name_safe}.docx", client_care_doc_io.getvalue())
-            if advice_doc_io: zipf.writestr(f"Initial_Advice_Summary_{client_name_safe}.docx", advice_doc_io.getvalue())
+            if advice_doc_io:
+                zipf.writestr(f"Initial_Advice_Summary_{client_name_safe}.docx", advice_doc_io.getvalue())
+        
         zip_io.seek(0)
+        
         st.success("Documents Generated Successfully!")
         st.download_button("Download All Documents as ZIP", zip_io, f"Client_Docs_{client_name_safe}.zip", "application/zip")
+        
     except Exception as e:
         st.error(f"An error occurred while building the documents: {e}")
         logger.exception("Error during document generation:")
