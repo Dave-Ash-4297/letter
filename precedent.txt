@@ -26,13 +26,13 @@ Dear {client_name_input},
 [/corp]
 [indiv]
 1. To comply with the individual identity requirement, you have two options:
-<a>We can carry out a remote ID verification of you and your ID documents using a SmartSearch facility. If you would like us to verify your identification remotely please provide your name, address, date of birth, personal email and mobile number. Once the search has been undertaken, SmartSearch will send you a text or email with a link to use on your smartphone which will require you to take a photo of your ID document and then yourself which it will then upload to its system that will check the document, provide us with a copy, and verify that you are the person on the ID document. Or;
-<a>You can provide us with two documents referred to in the list below, one photographic and one showing your current address. If you are local to any of our offices please call with your original documents and they will be copied whilst you wait and the copies forwarded to us:
-<i>Current signed passport;
-<i>Household utility bill;
-<i>Residence permit issued by the Home Office to EEA nationals on sight of own country passport;
-<i>Current UK or EEA photo-card driving licence; or
-<i>National Identity Card containing a photograph.
+<a> We can carry out a remote ID verification of you and your ID documents using a SmartSearch facility. If you would like us to verify your identification remotely please provide your name, address, date of birth, personal email and mobile number. Once the search has been undertaken, SmartSearch will send you a text or email with a link to use on your smartphone which will require you to take a photo of your ID document and then yourself which it will then upload to its system that will check the document, provide us with a copy, and verify that you are the person on the ID document. Or;
+<a> You can provide us with two documents referred to in the list below, one photographic and one showing your current address. If you are local to any of our offices please call with your original documents and they will be copied whilst you wait and the copies forwarded to us:
+<i> Current signed passport;
+<i> Household utility bill;
+<i> Residence permit issued by the Home Office to EEA nationals on sight of own country passport;
+<i> Current UK or EEA photo-card driving licence; or
+<i> National Identity Card containing a photograph.
 [/indiv]
 1. Please note that until these identification requirements have been satisfied, we may not be able to accept any money from you or make any substantial progress with your matter. It is therefore important that you provide your documents as soon as possible to avoid any delays.
 <ins>Document Preservation and Disclosure</ins>
@@ -65,22 +65,22 @@ Dear {client_name_input},
 1. It is common in litigation that even where costs are recoverable from an opponent, such recovery will not equate to the level of costs incurred by the successful party. Our agreement expressly permits us to charge an amount of costs greater than that which you will recover or could have recovered from your opponent, and expressly permits payment of such sum.
 1. This part of our agreement is made under section 74(3) of the Solicitors Act 1974 and Civil Procedure Rules 46.9 (2) and (3).
 1. If a Court orders your opponent to pay your costs, you should be aware that:
-<a>You will have to pay the costs to us in the first instance and thereafter, if you are successful in your claim, seek to recover those costs from the other side;
-<a>You are unlikely to recover the entirety of our charges from the other side even if your claim is successful;
-<a>In the unlikely event that your claim is subject to the fixed recoverable costs regime (see below) and the fixed costs recoverable from your opponent exceed the level of our charges calculated and incurred on a time-spent basis, you agree that the charges due to us from you will be the amount of fixed costs recoverable from your opponent.
-<a>Your opponent may refuse to comply with the Court’s order. If they do not pay, then you may seek to enforce the Court’s order (for example by sending in the bailiffs or obtaining a charge over property owned by them). However, you should be aware that this itself costs more money and takes time.
-<a>Your opponent may have very little by way of assets or they may simply disappear. If this happens then you will not be able to recover your costs or indeed any other monies awarded to you. That is why it is important that in financial disputes you consider now whether your opponent has sufficient assets to pay you a lump sum or instalments as appropriate.
-<a>There may be points during your case (including at its conclusion) where you are successful only in part on the issues in it, as a result of which you are entitled to payment of some of your costs by your opponent.
-<a>If your opponent receives funding from the Community Legal Service, there are statutory controls on the amount of costs that can be recovered from them. In these circumstances, it is highly unlikely that the Court will make an order that your opponent would have to contribute anything to your costs.
+<a> You will have to pay the costs to us in the first instance and thereafter, if you are successful in your claim, seek to recover those costs from the other side;
+<a> You are unlikely to recover the entirety of our charges from the other side even if your claim is successful;
+<a> In the unlikely event that your claim is subject to the fixed recoverable costs regime (see below) and the fixed costs recoverable from your opponent exceed the level of our charges calculated and incurred on a time-spent basis, you agree that the charges due to us from you will be the amount of fixed costs recoverable from your opponent.
+<a> Your opponent may refuse to comply with the Court’s order. If they do not pay, then you may seek to enforce the Court’s order (for example by sending in the bailiffs or obtaining a charge over property owned by them). However, you should be aware that this itself costs more money and takes time.
+<a> Your opponent may have very little by way of assets or they may simply disappear. If this happens then you will not be able to recover your costs or indeed any other monies awarded to you. That is why it is important that in financial disputes you consider now whether your opponent has sufficient assets to pay you a lump sum or instalments as appropriate.
+<a> There may be points during your case (including at its conclusion) where you are successful only in part on the issues in it, as a result of which you are entitled to payment of some of your costs by your opponent.
+<a> If your opponent receives funding from the Community Legal Service, there are statutory controls on the amount of costs that can be recovered from them. In these circumstances, it is highly unlikely that the Court will make an order that your opponent would have to contribute anything to your costs.
 <ins>Fixed Recoverable Costs</ins>
 1. Depending upon the value and complexity of a claim, the Court will allocate it to one of four ‘tracks’ when managing the case. If a claim is successful and a Court orders one party to pay the other’s costs, the amount of the costs that can be recovered may be fixed by the Court.
 [a1]
 1. From the information that you have supplied us with, the claim has already been allocated to the Small Claims Track which is the normal track for claims with a monetary value of £10,000 or less. Having been allocated to the Small Claims Track, the normal rule is that only the following limited costs are recoverable by a successful party:
-<a>Any Court fees paid.
-<a>Fixed issue costs ranging between £50 and £125.
-<a>Loss of earnings not exceeding £95 per person per day.
-<a>Expenses reasonably incurred in travelling to and from and attending a Court hearing.
-<a>A sum not exceeding £750 for any expert’s fees.
+<a> Any Court fees paid.
+<a> Fixed issue costs ranging between £50 and £125.
+<a> Loss of earnings not exceeding £95 per person per day.
+<a> Expenses reasonably incurred in travelling to and from and attending a Court hearing.
+<a> A sum not exceeding £750 for any expert’s fees.
 1. There are some exceptions to the normal rule and the Court can award costs against a party that has acted unreasonably. However, in practice such awards are rare.
 [/a1]
 [a2]
@@ -94,11 +94,11 @@ Dear {client_name_input},
 [/a4]
 [u1]
 1. From the information that you have supplied us with, it is likely that were Court proceedings to be commenced, the claim would be allocated to the Small Claims Track which is the normal track for claims with a monetary value of £10,000 or less. Upon allocation to the Small Claims Track, the normal rule is that only the following limited costs are recoverable by a successful party:
-<a>Any Court fees paid.
-<a>Fixed issue costs ranging between £50 and £125.
-<a>Loss of earnings not exceeding £95 per person per day.
-<a>Expenses reasonably incurred in travelling to and from and attending a Court hearing.
-<a>A sum not exceeding £750 for any expert’s fees.
+<a> Any Court fees paid.
+<a> Fixed issue costs ranging between £50 and £125.
+<a> Loss of earnings not exceeding £95 per person per day.
+<a> Expenses reasonably incurred in travelling to and from and attending a Court hearing.
+<a> A sum not exceeding £750 for any expert’s fees.
 1. There are some exceptions to the normal rule and the Court can award costs against a party that has acted unreasonably. However, in practice such awards are rare.
 [/u1]
 [u2]
@@ -123,9 +123,9 @@ Dear {client_name_input},
 1. The liability of Ramsdens Solicitors LLP, its partners and employees in any circumstances whatsoever, whether in contract, tort, statute or otherwise and howsoever caused (including our negligence) for loss or damage arising from or in connection with the provision of services to you shall be limited to the sum of £3,000,000.00 (three million pounds) excluding costs and interest.
 <ins>Bank Accounts and Cybercrime</ins>
 1. Should we ask you to pay money to us during the course of your matter then please send your funds to our account held with {bank_name} at {bank_address} to:
-[ind]Account Name: {account_name}
-[ind]Sort Code: {sort_code}
-[ind]Account Number: {account_number}
+[ind] Account Name: {account_name}
+[ind] Sort Code: {sort_code}
+[ind] Account Number: {account_number}
 1. Should you receive any email correspondence regarding our bank account details please telephone your usual contact at Ramsdens before sending your first payment to verify that the details you have been given are correct. We would never advise our clients of any change in our bank account details by email. Should this happen please treat the email as suspicious and contact us immediately. Please do not send any funds until you have verified that the details are correct.
 1. Similarly, if an occasion arises whereby we need to send money to you, we will not accept your bank account details by email without further verification. It is likely that we will telephone you to confirm that the details supplied to us are correct.
 <ins>Quality Standard</ins>
@@ -133,21 +133,21 @@ Dear {client_name_input},
 <ins>Data Protection</ins>
 1. The enclosed Privacy Notice explains how and why we collect, store, use and share your personal data. It also explains your rights in relation to your personal data and how to contact us or supervisory authorities in the event you have a complaint. Please read it carefully. This Privacy Notice is also available on our website, www.ramsdens.co.uk.
 1. Our use of your personal data is subject to your instructions, the EU General Data Protection Regulation (GDPR), other relevant UK and EU legislation and our professional duty of confidentiality. Under data-protection law, we can only use your personal data if we have a proper reason for doing so. Detailed reasons why we may process your personal data are set out in our Privacy Notice but examples are:
-<a>To comply with our legal and regulatory obligations;
-<a>For the performance of our contract with you or to take steps at your request before entering into a contract; or
-<a>For our legitimate interests or those of a third party, including:
-<i>Operational reasons, such as recording transactions, training and quality control;
-<i>Updating and enhancing client records;
-<i>Analysis to help us manage our practice; and
-<i>Marketing, such as by sending you updates about subjects and/or events that may be of interest to you.
+<a> To comply with our legal and regulatory obligations;
+<a> For the performance of our contract with you or to take steps at your request before entering into a contract; or
+<a> For our legitimate interests or those of a third party, including:
+<i> Operational reasons, such as recording transactions, training and quality control;
+<i> Updating and enhancing client records;
+<i> Analysis to help us manage our practice; and
+<i> Marketing, such as by sending you updates about subjects and/or events that may be of interest to you.
 1. However, this does not apply to processing sensitive personal data about you, as defined. If it is necessary to process this data for the continued provision of our services to you, we will need your explicit consent for doing so and will request this from you as required.
 <ins>Marketing Communications</ins>
 1. We would like to use your personal data to send you updates (by email, telephone or post) about legal developments that might be of interest to you and/or information about our services.
 1. This will be done pursuant to our Privacy Notice (referred to above), which contains more information about our and your rights in this respect.
 1. You have the right to opt out of receiving promotional communications at any time, by:
-<a>Contacting us by email on {marketing_email};
-<a>Using the ‘unsubscribe’ link in emails; or
-<a>Writing to Marketing Department at: {marketing_address}.
+<a> Contacting us by email on {marketing_email};
+<a> Using the ‘unsubscribe’ link in emails; or
+<a> Writing to Marketing Department at: {marketing_address}.
 
 Yours sincerely,
 
