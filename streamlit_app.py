@@ -55,13 +55,19 @@ def load_precedent_text():
 
 def get_placeholder_map(app_inputs, firm_details):
     placeholders = {
-        'qu1_dispute_nature': app_inputs.get('qu1_dispute_nature', ''), 'qu2_initial_steps': app_inputs.get('qu2_initial_steps', ''),
-        'qu3_timescales': app_inputs.get('qu3_timescales', ''), 'qu4_initial_costs_estimate': app_inputs.get('qu4_initial_costs_estimate', 'XX,XXX'),
-        'our_ref': str(app_inputs.get('our_ref', '')), 'your_ref': str(app_inputs.get('your_ref', '')), 
-        'letter_date': str(app_inputs.get('letter_date', '')), 'client_name_input': str(app_inputs.get('client_name_input', '')), 
-        'client_salutation': str(app_inputs.get('client_salutation', '')), 'client_address_line1': str(app_inputs.get('client_address_line1', '')),
+        'qu1_dispute_nature': app_inputs.get('qu1_dispute_nature', ''),
+        'qu2_initial_steps': app_inputs.get('qu2_initial_steps', ''),
+        'qu3_timescales': app_inputs.get('qu3_timescales', ''),
+        'qu4_initial_costs_with_vat': app_inputs.get('qu4_initial_costs_with_vat', 'XX,XXX'),
+        'our_ref': str(app_inputs.get('our_ref', '')),
+        'your_ref': str(app_inputs.get('your_ref', '')),
+        'letter_date': str(app_inputs.get('letter_date', '')),
+        'client_name_input': str(app_inputs.get('client_name_input', '')),
+        'client_salutation': str(app_inputs.get('client_salutation', '')),
+        'client_address_line1': str(app_inputs.get('client_address_line1', '')),
         'client_address_line2_conditional': str(app_inputs.get('client_address_line2_conditional', '')),
-        'client_postcode': str(app_inputs.get('client_postcode', '')), 'matter_number': str(app_inputs.get('our_ref', '')),
+        'client_postcode': str(app_inputs.get('client_postcode', '')),
+        'matter_number': str(app_inputs.get('our_ref', '')),
         'name': str(app_inputs.get('name', '')),
     }
     firm_placeholders = {k: str(v) for k, v in firm_details.items()}
@@ -88,7 +94,12 @@ def add_formatted_runs(paragraph, text_line, placeholder_map):
                 run.font.name, run.font.size = 'Arial', Pt(11)
 
 def should_render_track_block(tag, claim_assigned, selected_track):
-    tag_map = {'a1': (True, "Small Claims Track"), 'a2': (True, "Fast Track"), 'a3': (True, "Intermediate Track"), 'a4': (True, "Multi Track"), 'u1': (False, "Small Claims Track"), 'u2': (False, "Fast Track"), 'u3': (False, "Intermediate Track"), 'u4': (False, "Multi Track")}
+    tag_map = {
+        'a1': (True, "Small Claims Track"), 'a2': (True, "Fast Track"),
+        'a3': (True, "Intermediate Track"), 'a4': (True, "Multi Track"),
+        'u1': (False, "Small Claims Track"), 'u2': (False, "Fast Track"),
+        'u3': (False, "Intermediate Track"), 'u4': (False, "Multi Track")
+    }
     expected = tag_map.get(tag)
     if not expected: return False
     return claim_assigned == expected[0] and selected_track == expected[1]
@@ -101,7 +112,11 @@ def generate_initial_advice_doc(app_inputs, placeholder_map):
     p.paragraph_format.space_after = Pt(12)
     table = doc.add_table(rows=3, cols=2)
     table.style = 'Table Grid'
-    rows_data = [("Date of Advice", app_inputs['initial_advice_date'].strftime('%d/%m/%Y') if app_inputs.get('initial_advice_date') else ''), ("Method of Advice", app_inputs.get('initial_advice_method', '')), ("Advice Given", app_inputs.get('initial_advice_content', ''))]
+    rows_data = [
+        ("Date of Advice", app_inputs['initial_advice_date'].strftime('%d/%m/%Y') if app_inputs.get('initial_advice_date') else ''),
+        ("Method of Advice", app_inputs.get('initial_advice_method', '')),
+        ("Advice Given", app_inputs.get('initial_advice_content', ''))
+    ]
     for i, (label, value) in enumerate(rows_data):
         table.rows[i].cells[0].text, table.rows[i].cells[1].text = label, value
     doc_io = io.BytesIO()
@@ -126,23 +141,24 @@ def preprocess_precedent(precedent_content, app_inputs):
         elif match_end_tag:
             current_block_tag = None
         elif match_heading:
-            element = {'type': 'heading', 'content_lines': [match_heading.group(1)]}
+            element = {'type': 'heading', 'content_lines': [match_heading.group(1)], 'block_tag': current_block_tag}
             list_counter = 0  # Reset counter on heading to ensure list continuity
         elif match_numbered_list:
             list_counter += 1
-            element = {'type': 'numbered_list_item', 'content_lines': [match_numbered_list.group(1)], 'number': list_counter}
+            element = {'type': 'numbered_list_item', 'content_lines': [match_numbered_list.group(1)], 'number': list_counter, 'block_tag': current_block_tag}
             logger.info(f"Processing numbered list item {list_counter}: {match_numbered_list.group(1)}")
         elif match_letter_list:
-            element = {'type': 'letter_list_item', 'content_lines': [match_letter_list.group(1)]}
+            element = {'type': 'letter_list_item', 'content_lines': [match_letter_list.group(1)], 'block_tag': current_block_tag}
+            logger.info(f"Processing letter list item: {match_letter_list.group(1)}")
         elif match_roman_list:
-            element = {'type': 'roman_list_item', 'content_lines': [match_roman_list.group(1)]}
+            element = {'type': 'roman_list_item', 'content_lines': [match_roman_list.group(1)], 'block_tag': current_block_tag}
+            logger.info(f"Processing roman list item: {match_roman_list.group(1)}")
         elif not stripped_line:
-            element = {'type': 'blank_line', 'content_lines': []}
+            element = {'type': 'blank_line', 'content_lines': [], 'block_tag': current_block_tag}
         else:
-            element = {'type': 'general_paragraph', 'content_lines': [line]}
+            element = {'type': 'general_paragraph', 'content_lines': [line], 'block_tag': current_block_tag}
             
         if element:
-            element['block_tag'] = current_block_tag
             logical_elements.append(element)
         i += 1
     return logical_elements
@@ -215,6 +231,7 @@ def process_precedent_text(precedent_content, app_inputs, placeholder_map):
                 add_formatted_runs(p, text, placeholder_map)
                 p.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
                 p.paragraph_format.space_after = Pt(6)
+                logger.info(f"Added list item at level {level}: {text}")
 
             if element['type'] == 'blank_line':
                 continue
@@ -287,27 +304,42 @@ with st.form("input_form"):
     step_value = float(hourly_rate / 2)
     cost_type_is_range = st.toggle("Use a cost range", True)
     if cost_type_is_range:
-        lower_cost = st.number_input("Lower £", float(hourly_rate * 2), step=step_value)
-        upper_cost = st.number_input("Upper £", float(hourly_rate * 3), step=step_value)
+        lower_cost = st.number_input("Lower £", 850.0, step=step_value)
+        upper_cost = st.number_input("Upper £", 1400.0, step=step_value)
     else:
         fixed_cost = st.number_input("Fixed cost £", float(hourly_rate * 2.5), step=step_value)
 
     submitted = st.form_submit_button("Generate Documents")
 
 if submitted:
-    costs_text = (f"£{lower_cost:,.2f} to £{upper_cost:,.2f} plus VAT" if cost_type_is_range else f"a fixed fee of £{fixed_cost:,.2f} plus VAT")
+    if cost_type_is_range:
+        lower_cost_vat = lower_cost * 1.2
+        upper_cost_vat = upper_cost * 1.2
+        costs_text = f"the costs will be between £{lower_cost:,.2f} and £{upper_cost:,.2f} plus VAT that being £{lower_cost_vat:,.2f} to £{upper_cost_vat:,.2f}"
+    else:
+        fixed_cost_vat = fixed_cost * 1.2
+        costs_text = f"a fixed fee of £{fixed_cost:,.2f} plus VAT that being £{fixed_cost_vat:,.2f}"
     app_inputs = {
-        'qu1_dispute_nature': sanitize_input(qu1_dispute_nature), 'qu2_initial_steps': sanitize_input(qu2_initial_steps),
-        'qu3_timescales': sanitize_input(qu3_timescales), 'qu4_initial_costs_estimate': costs_text,
-        'client_type': client_type, 'claim_assigned': claim_assigned_input == "Yes", 'selected_track': selected_track,
-        'our_ref': sanitize_input(our_ref), 'your_ref': sanitize_input(your_ref),
-        'letter_date': letter_date.strftime('%d %B %Y'), 'client_name_input': sanitize_input(client_name_input),
+        'qu1_dispute_nature': sanitize_input(qu1_dispute_nature),
+        'qu2_initial_steps': sanitize_input(qu2_initial_steps),
+        'qu3_timescales': sanitize_input(qu3_timescales),
+        'qu4_initial_costs_with_vat': costs_text,
+        'client_type': client_type,
+        'claim_assigned': claim_assigned_input == "Yes",
+        'selected_track': selected_track,
+        'our_ref': sanitize_input(our_ref),
+        'your_ref': sanitize_input(your_ref),
+        'letter_date': letter_date.strftime('%d %B %Y'),
+        'client_name_input': sanitize_input(client_name_input),
         'client_salutation': sanitize_input(client_salutation_name),
         'client_address_line1': sanitize_input(client_address_line1),
         'client_address_line2_conditional': sanitize_input(client_address_line2) if client_address_line2 else "",
-        'client_postcode': sanitize_input(client_postcode), 'name': sanitize_input(firm_details["person_responsible_name"]),
-        'initial_advice_content': initial_advice_content, 'initial_advice_method': initial_advice_method,
-        'initial_advice_date': initial_advice_date, 'firm_details': firm_details
+        'client_postcode': sanitize_input(client_postcode),
+        'name': sanitize_input(firm_details["person_responsible_name"]),
+        'initial_advice_content': initial_advice_content,
+        'initial_advice_method': initial_advice_method,
+        'initial_advice_date': initial_advice_date,
+        'firm_details': firm_details
     }
     placeholder_map = get_placeholder_map(app_inputs, firm_details)
     try:
@@ -334,3 +366,4 @@ if submitted:
     except Exception as e:
         st.error(f"An error occurred while building the documents: {e}")
         logger.exception("Error during document generation:")
+        
