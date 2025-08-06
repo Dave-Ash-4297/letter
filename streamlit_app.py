@@ -110,13 +110,13 @@ def generate_initial_advice_doc(app_inputs, placeholder_map):
     return doc_io
 
 def preprocess_precedent(precedent_content, app_inputs):
-    logical_elements, lines, i, current_block_tag = [], precedent_content.splitlines(), 0, None
+    logical_elements, lines, i, current_block_tag, list_counter = [], precedent_content.splitlines(), 0, None, 0
     while i < len(lines):
         line, stripped_line = lines[i], lines[i].strip()
         match_start_tag = re.match(r'^\[(indiv|corp|a[1-4]|u[1-4])\]$', stripped_line)
         match_end_tag = re.match(r'^\[/(indiv|corp|a[1-4]|u[1-4])\]$', stripped_line)
         match_heading = re.match(r'^<ins>(.*)</ins>$', stripped_line)
-        match_numbered_list = re.match(r'^\d+\.\s*(.*)', stripped_line)  # Match any numbered list item
+        match_numbered_list = re.match(r'^\d+\.\s*(.*)', stripped_line)
         match_letter_list = re.match(r'^<a>\s*(.*)', stripped_line)
         match_roman_list = re.match(r'^<i>\s*(.*)', stripped_line)
         element = None
@@ -127,8 +127,11 @@ def preprocess_precedent(precedent_content, app_inputs):
             current_block_tag = None
         elif match_heading:
             element = {'type': 'heading', 'content_lines': [match_heading.group(1)]}
+            list_counter = 0  # Reset counter on heading to ensure list continuity
         elif match_numbered_list:
-            element = {'type': 'numbered_list_item', 'content_lines': [match_numbered_list.group(1)]}
+            list_counter += 1
+            element = {'type': 'numbered_list_item', 'content_lines': [match_numbered_list.group(1)], 'number': list_counter}
+            logger.info(f"Processing numbered list item {list_counter}: {match_numbered_list.group(1)}")
         elif match_letter_list:
             element = {'type': 'letter_list_item', 'content_lines': [match_letter_list.group(1)]}
         elif match_roman_list:
