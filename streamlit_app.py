@@ -325,7 +325,7 @@ if submitted:
         upper_cost_vat = upper_cost * 1.2
         lower_cost_vat_rounded = math.ceil(lower_cost_vat / 50) * 50
         upper_cost_vat_rounded = math.ceil(upper_cost_vat / 50) * 50
-        costs_text = f"the costs will be between £{lower_cost:,.2f} and £{upper_cost:,.2f} plus VAT that being £{lower_cost_vat_rounded:,.2f} to £{upper_cost_vat_rounded:,.2f}"
+        costs_text = f"from £{lower_cost:,.2f} to £{upper_cost:,.2f} plus VAT which means between £{lower_cost_vat_rounded:,.2f} to £{upper_cost_vat_rounded:,.2f}"
     else:
         fixed_cost_vat = fixed_cost * 1.2
         fixed_cost_vat_rounded = math.ceil(fixed_cost_vat / 50) * 50
