@@ -17,14 +17,27 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 INDENT_FOR_IND_TAG_CM = 1.25
-MAIN_LIST_TEXT_START_CM = 1.0  # Adjusted for main paragraphs
-MARKER_OFFSET_CM = 0.5  # Adjusted for better marker alignment
-SUB_LIST_TEXT_START_CM = 1.5  # Adjusted for sub-paragraphs
-SUB_ROMAN_TEXT_START_CM = 2.0  # Adjusted for sub-sub-paragraphs
+MAIN_LIST_TEXT_START_CM = 1.27  # Adjusted for main paragraphs (0.5 inch)
+MARKER_OFFSET_CM = 0.63  # Adjusted for better marker alignment (0.25 inch)
+SUB_LIST_TEXT_START_CM = 1.9   # Adjusted for sub-paragraphs (0.75 inch)
+SUB_ROMAN_TEXT_START_CM = 2.54 # Adjusted for sub-sub-paragraphs (1 inch)
 
 def sanitize_input(text):
     if not isinstance(text, str): text = str(text)
     return html.escape(text)
+
+def format_currency(value):
+    """Ensure monetary values are formatted correctly without spaces (e.g., £750 instead of £7 50)."""
+    if isinstance(value, str):
+        # Remove any spaces and ensure proper formatting
+        value = re.sub(r'\s+', '', value)
+        # Match £ followed by digits and optional decimal
+        match = re.match(r'£(\d+)(?:\.(\d{1,2}))?$', value)
+        if match:
+            pounds = match.group(1)
+            pence = match.group(2) or '00'
+            return f'£{int(pounds):,}.{pence.zfill(2)}'
+    return str(value)
 
 @st.cache_data
 def load_firm_details():
@@ -86,6 +99,8 @@ def add_formatted_runs(paragraph, text_line, placeholder_map):
         if placeholder_pattern in processed_text:
             logger.info(f"Replacing placeholder {placeholder_pattern} with {value}")
         processed_text = processed_text.replace(placeholder_pattern, str(value))
+    # Format any monetary values in the text
+    processed_text = re.sub(r'£\d+\s*\d*', format_currency, processed_text)
     parts = re.split(r'(<bd>|</bd>|<ins>|</ins>)', processed_text)
     is_bold = is_underline = False
     for part in parts:
@@ -386,4 +401,3 @@ if submitted:
     except Exception as e:
         st.error(f"An error occurred while building the documents: {e}")
         logger.exception("Error during document generation:")
-</xaiArtifact
