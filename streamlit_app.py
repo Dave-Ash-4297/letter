@@ -116,7 +116,7 @@ def preprocess_precedent(precedent_content, app_inputs):
         match_start_tag = re.match(r'^\[(indiv|corp|a[1-4]|u[1-4])\]$', stripped_line)
         match_end_tag = re.match(r'^\[/(indiv|corp|a[1-4]|u[1-4])\]$', stripped_line)
         match_heading = re.match(r'^<ins>(.*)</ins>$', stripped_line)
-        match_numbered_list = re.match(r'^(\d+)\.\s*(.*)', stripped_line)
+        match_numbered_list = re.match(r'^\d+\.\s*(.*)', stripped_line)  # Match any numbered list item
         match_letter_list = re.match(r'^<a>\s*(.*)', stripped_line)
         match_roman_list = re.match(r'^<i>\s*(.*)', stripped_line)
         element = None
@@ -128,7 +128,7 @@ def preprocess_precedent(precedent_content, app_inputs):
         elif match_heading:
             element = {'type': 'heading', 'content_lines': [match_heading.group(1)]}
         elif match_numbered_list:
-            element = {'type': 'numbered_list_item', 'content_lines': [match_numbered_list.group(2)]}
+            element = {'type': 'numbered_list_item', 'content_lines': [match_numbered_list.group(1)]}
         elif match_letter_list:
             element = {'type': 'letter_list_item', 'content_lines': [match_letter_list.group(1)]}
         elif match_roman_list:
@@ -331,4 +331,3 @@ if submitted:
     except Exception as e:
         st.error(f"An error occurred while building the documents: {e}")
         logger.exception("Error during document generation:")
-        
