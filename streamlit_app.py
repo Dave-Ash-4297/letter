@@ -16,11 +16,14 @@ import math
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
+# Fixed indentation constants for proper alignment
 INDENT_FOR_IND_TAG_CM = 1.25
-MAIN_LIST_TEXT_START_CM = 1.27  # Adjusted for main paragraphs (0.5 inch)
-MARKER_OFFSET_CM = 0.63  # Adjusted for better marker alignment (0.25 inch)
-SUB_LIST_TEXT_START_CM = 1.9   # Adjusted for sub-paragraphs (0.75 inch)
-SUB_ROMAN_TEXT_START_CM = 2.54 # Adjusted for sub-sub-paragraphs (1 inch)
+MAIN_LIST_TEXT_START_CM = 1.27   # Main numbered items (1., 2., etc.)
+MAIN_MARKER_OFFSET_CM = 0.63     # Hanging indent for main numbers
+SUB_LIST_TEXT_START_CM = 2.54    # Sub-items (a), b), etc.) - increased from 1.9
+SUB_MARKER_OFFSET_CM = 0.63      # Hanging indent for sub letters
+SUB_ROMAN_TEXT_START_CM = 3.81   # Sub-sub-items (i), ii), etc.) - increased from 2.54
+SUB_ROMAN_MARKER_OFFSET_CM = 0.63 # Hanging indent for roman numerals
 
 def sanitize_input(text):
     if not isinstance(text, str): text = str(text)
@@ -203,29 +206,66 @@ def process_precedent_text(precedent_content, app_inputs, placeholder_map):
         abstract_num = OxmlElement('w:abstractNum')
         abstract_num.set(qn('w:abstractNumId'), str(abstract_num_id))
 
-        def create_level(ilvl, numFmt, lvlText, left_indent, start_val=1):
+        def create_level(ilvl, numFmt, lvlText, left_indent, hanging_indent, start_val=1):
             lvl = OxmlElement('w:lvl')
             lvl.set(qn('w:ilvl'), str(ilvl))
+            
+            # Number format
             numFmt_el = OxmlElement('w:numFmt')
             numFmt_el.set(qn('w:val'), numFmt)
             lvl.append(numFmt_el)
+            
+            # Level text (how the number appears)
             lvlText_el = OxmlElement('w:lvlText')
             lvlText_el.set(qn('w:val'), lvlText)
             lvl.append(lvlText_el)
+            
+            # Start value
             start_el = OxmlElement('w:start')
             start_el.set(qn('w:val'), str(start_val))
             lvl.append(start_el)
+            
+            # Paragraph properties with proper indentation
             pPr = OxmlElement('w:pPr')
             ind = OxmlElement('w:ind')
             ind.set(qn('w:left'), str(left_indent.twips))
-            ind.set(qn('w:hanging'), str(Cm(MARKER_OFFSET_CM).twips))
+            ind.set(qn('w:hanging'), str(hanging_indent.twips))
             pPr.append(ind)
             lvl.append(pPr)
+            
             return lvl
 
-        abstract_num.append(create_level(0, 'decimal', '%1.', Cm(MAIN_LIST_TEXT_START_CM), start_val=1))
-        abstract_num.append(create_level(1, 'lowerLetter', '(%2)', Cm(SUB_LIST_TEXT_START_CM), start_val=1))
-        abstract_num.append(create_level(2, 'lowerRoman', '(%3)', Cm(SUB_ROMAN_TEXT_START_CM), start_val=1))
+        # Create the three levels with corrected indentation
+        # Level 0: Main numbered items (1., 2., 3., etc.)
+        abstract_num.append(create_level(
+            ilvl=0, 
+            numFmt='decimal', 
+            lvlText='%1.', 
+            left_indent=Cm(MAIN_LIST_TEXT_START_CM), 
+            hanging_indent=Cm(MAIN_MARKER_OFFSET_CM),
+            start_val=1
+        ))
+        
+        # Level 1: Sub-items (a), b), c), etc.)
+        abstract_num.append(create_level(
+            ilvl=1, 
+            numFmt='lowerLetter', 
+            lvlText='(%2)', 
+            left_indent=Cm(SUB_LIST_TEXT_START_CM), 
+            hanging_indent=Cm(SUB_MARKER_OFFSET_CM),
+            start_val=1
+        ))
+        
+        # Level 2: Sub-sub-items (i), ii), iii), etc.)
+        abstract_num.append(create_level(
+            ilvl=2, 
+            numFmt='lowerRoman', 
+            lvlText='(%3)', 
+            left_indent=Cm(SUB_ROMAN_TEXT_START_CM), 
+            hanging_indent=Cm(SUB_ROMAN_MARKER_OFFSET_CM),
+            start_val=1
+        ))
+        
         numbering_elm.append(abstract_num)
 
         num = OxmlElement('w:num')
