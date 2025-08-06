@@ -17,10 +17,10 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 INDENT_FOR_IND_TAG_CM = 1.25
-MAIN_LIST_TEXT_START_CM = 0.7
-MARKER_OFFSET_CM = 0.7
-SUB_LIST_TEXT_START_CM = 1.4
-SUB_ROMAN_TEXT_START_CM = 2.1
+MAIN_LIST_TEXT_START_CM = 1.0  # Adjusted for main paragraphs
+MARKER_OFFSET_CM = 0.5  # Adjusted for better marker alignment
+SUB_LIST_TEXT_START_CM = 1.5  # Adjusted for sub-paragraphs
+SUB_ROMAN_TEXT_START_CM = 2.0  # Adjusted for sub-sub-paragraphs
 
 def sanitize_input(text):
     if not isinstance(text, str): text = str(text)
@@ -34,7 +34,7 @@ def load_firm_details():
         "supervisor_name": "Nick Armitage", "supervisor_title": "Partner",
         "person_responsible_phone": "01484 821558", "person_responsible_mobile": "07923 250815",
         "person_responsible_email": "paul.pinder@ramsdens.co.uk", "assistant_name": "Reece Collier",
-        "supervisor_contact_for_complaints": "Nick Armitage on 01484 507121", "bank_name": "Barclables Bank PLC",
+        "supervisor_contact_for_complaints": "Nick Armitage on 01484 507121", "bank_name": "Barclays Bank PLC",
         "bank_address": "17 Market Place, Huddersfield", "account_name": "Ramsdens Solicitors LLP Client Account",
         "sort_code": "20-43-12", "account_number": "03909026",
         "marketing_email": "dataprotection@ramsdens.co.uk",
@@ -386,3 +386,4 @@ if submitted:
     except Exception as e:
         st.error(f"An error occurred while building the documents: {e}")
         logger.exception("Error during document generation:")
+</xaiArtifact
