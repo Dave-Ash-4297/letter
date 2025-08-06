@@ -10,6 +10,7 @@ import re
 import zipfile
 import logging
 import html
+import math
 
 # --- Setup Logging, Constants, and Utility Functions ---
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -125,7 +126,7 @@ def generate_initial_advice_doc(app_inputs, placeholder_map):
     return doc_io
 
 def preprocess_precedent(precedent_content, app_inputs):
-    logical_elements, lines, i, current_block_tag, list_counter = [], precedent_content.splitlines(), 0, None, 0
+    logical_elements, lines, i, current_block_tag, list_counter, letter_counter, roman_counter = [], precedent_content.splitlines(), 0, None, 0, 0, 0
     while i < len(lines):
         line, stripped_line = lines[i], lines[i].strip()
         match_start_tag = re.match(r'^\[(indiv|corp|a[1-4]|u[1-4])\]$', stripped_line)
@@ -138,21 +139,27 @@ def preprocess_precedent(precedent_content, app_inputs):
         
         if match_start_tag:
             current_block_tag = match_start_tag.group(1)
+            list_counter = letter_counter = roman_counter = 0  # Reset all counters at block start
         elif match_end_tag:
             current_block_tag = None
+            list_counter = letter_counter = roman_counter = 0  # Reset all counters at block end
         elif match_heading:
             element = {'type': 'heading', 'content_lines': [match_heading.group(1)], 'block_tag': current_block_tag}
-            list_counter = 0  # Reset counter on heading to ensure list continuity
+            list_counter = letter_counter = roman_counter = 0  # Reset all counters on heading
         elif match_numbered_list:
             list_counter += 1
             element = {'type': 'numbered_list_item', 'content_lines': [match_numbered_list.group(1)], 'number': list_counter, 'block_tag': current_block_tag}
             logger.info(f"Processing numbered list item {list_counter}: {match_numbered_list.group(1)}")
+            letter_counter = roman_counter = 0  # Reset sub-level counters
         elif match_letter_list:
-            element = {'type': 'letter_list_item', 'content_lines': [match_letter_list.group(1)], 'block_tag': current_block_tag}
-            logger.info(f"Processing letter list item: {match_letter_list.group(1)}")
+            letter_counter += 1
+            element = {'type': 'letter_list_item', 'content_lines': [match_letter_list.group(1)], 'number': letter_counter, 'block_tag': current_block_tag}
+            logger.info(f"Processing letter list item {chr(96 + letter_counter)}: {match_letter_list.group(1)}")
+            roman_counter = 0  # Reset roman counter
         elif match_roman_list:
-            element = {'type': 'roman_list_item', 'content_lines': [match_roman_list.group(1)], 'block_tag': current_block_tag}
-            logger.info(f"Processing roman list item: {match_roman_list.group(1)}")
+            roman_counter += 1
+            element = {'type': 'roman_list_item', 'content_lines': [match_roman_list.group(1)], 'number': roman_counter, 'block_tag': current_block_tag}
+            logger.info(f"Processing roman list item {roman_counter}: {match_roman_list.group(1)}")
         elif not stripped_line:
             element = {'type': 'blank_line', 'content_lines': [], 'block_tag': current_block_tag}
         else:
@@ -173,7 +180,7 @@ def process_precedent_text(precedent_content, app_inputs, placeholder_map):
         abstract_num = OxmlElement('w:abstractNum')
         abstract_num.set(qn('w:abstractNumId'), str(abstract_num_id))
 
-        def create_level(ilvl, numFmt, lvlText, left_indent, start_val=None):
+        def create_level(ilvl, numFmt, lvlText, left_indent, start_val=1):
             lvl = OxmlElement('w:lvl')
             lvl.set(qn('w:ilvl'), str(ilvl))
             numFmt_el = OxmlElement('w:numFmt')
@@ -182,10 +189,9 @@ def process_precedent_text(precedent_content, app_inputs, placeholder_map):
             lvlText_el = OxmlElement('w:lvlText')
             lvlText_el.set(qn('w:val'), lvlText)
             lvl.append(lvlText_el)
-            if start_val is not None:
-                start_el = OxmlElement('w:start')
-                start_el.set(qn('w:val'), str(start_val))
-                lvl.append(start_el)
+            start_el = OxmlElement('w:start')
+            start_el.set(qn('w:val'), str(start_val))
+            lvl.append(start_el)
             pPr = OxmlElement('w:pPr')
             ind = OxmlElement('w:ind')
             ind.set(qn('w:left'), str(left_indent.twips))
@@ -195,8 +201,8 @@ def process_precedent_text(precedent_content, app_inputs, placeholder_map):
             return lvl
 
         abstract_num.append(create_level(0, 'decimal', '%1.', Cm(MAIN_LIST_TEXT_START_CM), start_val=1))
-        abstract_num.append(create_level(1, 'lowerLetter', '(%2)', Cm(SUB_LIST_TEXT_START_CM)))
-        abstract_num.append(create_level(2, 'lowerRoman', '(%3)', Cm(SUB_ROMAN_TEXT_START_CM)))
+        abstract_num.append(create_level(1, 'lowerLetter', '(%2)', Cm(SUB_LIST_TEXT_START_CM), start_val=1))
+        abstract_num.append(create_level(2, 'lowerRoman', '(%3)', Cm(SUB_ROMAN_TEXT_START_CM), start_val=1))
         numbering_elm.append(abstract_num)
 
         num = OxmlElement('w:num')
@@ -301,13 +307,15 @@ with st.form("input_form"):
     
     st.subheader("Estimated Initial Costs")
     hourly_rate = st.number_input("Your Hourly Rate (£)", 295)
-    step_value = float(hourly_rate / 2)
+    step_value = float(hourly_rate / 2)  # Half-hour increments
+    lower_hours = 2.5
+    upper_hours = 3.5
     cost_type_is_range = st.toggle("Use a cost range", True)
     if cost_type_is_range:
-        lower_cost = st.number_input("Lower £", 850.0, step=step_value)
-        upper_cost = st.number_input("Upper £", 1400.0, step=step_value)
+        lower_cost = st.number_input("Lower £", value=hourly_rate * lower_hours, step=step_value)
+        upper_cost = st.number_input("Upper £", value=hourly_rate * upper_hours, step=step_value)
     else:
-        fixed_cost = st.number_input("Fixed cost £", float(hourly_rate * 2.5), step=step_value)
+        fixed_cost = st.number_input("Fixed cost £", value=hourly_rate * lower_hours, step=step_value)
 
     submitted = st.form_submit_button("Generate Documents")
 
@@ -315,10 +323,13 @@ if submitted:
     if cost_type_is_range:
         lower_cost_vat = lower_cost * 1.2
         upper_cost_vat = upper_cost * 1.2
-        costs_text = f"the costs will be between £{lower_cost:,.2f} and £{upper_cost:,.2f} plus VAT that being £{lower_cost_vat:,.2f} to £{upper_cost_vat:,.2f}"
+        lower_cost_vat_rounded = math.ceil(lower_cost_vat / 50) * 50
+        upper_cost_vat_rounded = math.ceil(upper_cost_vat / 50) * 50
+        costs_text = f"the costs will be between £{lower_cost:,.2f} and £{upper_cost:,.2f} plus VAT that being £{lower_cost_vat_rounded:,.2f} to £{upper_cost_vat_rounded:,.2f}"
     else:
         fixed_cost_vat = fixed_cost * 1.2
-        costs_text = f"a fixed fee of £{fixed_cost:,.2f} plus VAT that being £{fixed_cost_vat:,.2f}"
+        fixed_cost_vat_rounded = math.ceil(fixed_cost_vat / 50) * 50
+        costs_text = f"a fixed fee of £{fixed_cost:,.2f} plus VAT that being £{fixed_cost_vat_rounded:,.2f}"
     app_inputs = {
         'qu1_dispute_nature': sanitize_input(qu1_dispute_nature),
         'qu2_initial_steps': sanitize_input(qu2_initial_steps),
@@ -366,4 +377,3 @@ if submitted:
     except Exception as e:
         st.error(f"An error occurred while building the documents: {e}")
         logger.exception("Error during document generation:")
-        
