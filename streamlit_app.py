@@ -43,8 +43,6 @@ def load_firm_details():
 @st.cache_data
 def load_precedent_text():
     try:
-        # This assumes you have a file named "precedent.txt" in the same directory as your script.
-        # The content of this file should be the text provided in the PDF.
         with open("precedent.txt", "r", encoding="utf-8") as f:
             content = f.read()
             return content
@@ -115,7 +113,6 @@ def preprocess_precedent(precedent_content, app_inputs):
     logical_elements, lines, i, current_block_tag = [], precedent_content.splitlines(), 0, None
     while i < len(lines):
         line, stripped_line = lines[i], lines[i].strip()
-        # Ensure tags are on their own lines for this logic to work
         match_start_tag = re.match(r'^\[(indiv|corp|a[1-4]|u[1-4])\]$', stripped_line)
         match_end_tag = re.match(r'^\[/(indiv|corp|a[1-4]|u[1-4])\]$', stripped_line)
         match_heading = re.match(r'^<ins>(.*)</ins>$', stripped_line)
@@ -157,7 +154,7 @@ def process_precedent_text(precedent_content, app_inputs, placeholder_map):
         abstract_num = OxmlElement('w:abstractNum')
         abstract_num.set(qn('w:abstractNumId'), str(abstract_num_id))
 
-        def create_level(ilvl, numFmt, lvlText, left_indent):
+        def create_level(ilvl, numFmt, lvlText, left_indent, start_val=None):
             lvl = OxmlElement('w:lvl')
             lvl.set(qn('w:ilvl'), str(ilvl))
             numFmt_el = OxmlElement('w:numFmt')
@@ -166,6 +163,10 @@ def process_precedent_text(precedent_content, app_inputs, placeholder_map):
             lvlText_el = OxmlElement('w:lvlText')
             lvlText_el.set(qn('w:val'), lvlText)
             lvl.append(lvlText_el)
+            if start_val is not None:
+                start_el = OxmlElement('w:start')
+                start_el.set(qn('w:val'), str(start_val))
+                lvl.append(start_el)
             pPr = OxmlElement('w:pPr')
             ind = OxmlElement('w:ind')
             ind.set(qn('w:left'), str(left_indent.twips))
@@ -174,9 +175,9 @@ def process_precedent_text(precedent_content, app_inputs, placeholder_map):
             lvl.append(pPr)
             return lvl
 
-        abstract_num.append(create_level(0, 'decimal', '%1.', Cm(MAIN_LIST_TEXT_START_CM)))
-        abstract_num.append(create_level(1, 'lowerLetter', '%2.', Cm(SUB_LIST_TEXT_START_CM)))
-        abstract_num.append(create_level(2, 'lowerRoman', '%3.', Cm(SUB_ROMAN_TEXT_START_CM)))
+        abstract_num.append(create_level(0, 'decimal', '%1.', Cm(MAIN_LIST_TEXT_START_CM), start_val=1))
+        abstract_num.append(create_level(1, 'lowerLetter', '(%2)', Cm(SUB_LIST_TEXT_START_CM)))
+        abstract_num.append(create_level(2, 'lowerRoman', '(%3)', Cm(SUB_ROMAN_TEXT_START_CM)))
         numbering_elm.append(abstract_num)
 
         num = OxmlElement('w:num')
@@ -213,7 +214,6 @@ def process_precedent_text(precedent_content, app_inputs, placeholder_map):
                 p.paragraph_format.space_after = Pt(6)
 
             if element['type'] == 'blank_line':
-                # We can add a blank paragraph if desired, but often it's better to control spacing via paragraph formats
                 continue
             elif element['type'] == 'heading':
                 p = doc.add_paragraph()
@@ -281,17 +281,12 @@ with st.form("input_form"):
     
     st.subheader("Estimated Initial Costs")
     hourly_rate = st.number_input("Your Hourly Rate (£)", 295)
-    
-    # Calculate the step value based on a half-hour rate
     step_value = float(hourly_rate / 2)
-
     cost_type_is_range = st.toggle("Use a cost range", True)
     if cost_type_is_range:
-        # Add the step parameter to the number inputs
         lower_cost = st.number_input("Lower £", float(hourly_rate * 2), step=step_value)
         upper_cost = st.number_input("Upper £", float(hourly_rate * 3), step=step_value)
     else:
-        # Add the step parameter to the number input
         fixed_cost = st.number_input("Fixed cost £", float(hourly_rate * 2.5), step=step_value)
 
     submitted = st.form_submit_button("Generate Documents")
