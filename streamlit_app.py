@@ -34,7 +34,7 @@ def load_firm_details():
         "supervisor_name": "Nick Armitage", "supervisor_title": "Partner",
         "person_responsible_phone": "01484 821558", "person_responsible_mobile": "07923 250815",
         "person_responsible_email": "paul.pinder@ramsdens.co.uk", "assistant_name": "Reece Collier",
-        "supervisor_contact_for_complaints": "Nick Armitage on 01484 507121", "bank_name": "Barclays Bank PLC",
+        "supervisor_contact_for_complaints": "Nick Armitage on 01484 507121", "bank_name": "Barclables Bank PLC",
         "bank_address": "17 Market Place, Huddersfield", "account_name": "Ramsdens Solicitors LLP Client Account",
         "sort_code": "20-43-12", "account_number": "03909026",
         "marketing_email": "dataprotection@ramsdens.co.uk",
@@ -46,12 +46,15 @@ def load_precedent_text():
     try:
         with open("precedent.txt", "r", encoding="utf-8") as f:
             content = f.read()
+            logger.info("Successfully loaded precedent.txt")
             return content
     except FileNotFoundError:
         st.error("precedent.txt not found. Please ensure the template text file is in the correct directory.")
+        logger.error("precedent.txt not found")
         return ""
     except Exception as e:
         st.error(f"Error loading precedent.txt: {e}")
+        logger.error(f"Error loading precedent.txt: {e}")
         return ""
 
 def get_placeholder_map(app_inputs, firm_details):
@@ -73,12 +76,16 @@ def get_placeholder_map(app_inputs, firm_details):
     }
     firm_placeholders = {k: str(v) for k, v in firm_details.items()}
     placeholders.update(firm_placeholders)
+    logger.info(f"Placeholder map created: {placeholders}")
     return placeholders
 
 def add_formatted_runs(paragraph, text_line, placeholder_map):
     processed_text = text_line
     for placeholder, value in placeholder_map.items():
-        processed_text = processed_text.replace(f"{{{placeholder}}}", str(value))
+        placeholder_pattern = f"{{{placeholder}}}"
+        if placeholder_pattern in processed_text:
+            logger.info(f"Replacing placeholder {placeholder_pattern} with {value}")
+        processed_text = processed_text.replace(placeholder_pattern, str(value))
     parts = re.split(r'(<bd>|</bd>|<ins>|</ins>)', processed_text)
     is_bold = is_underline = False
     for part in parts:
@@ -93,6 +100,7 @@ def add_formatted_runs(paragraph, text_line, placeholder_map):
                 run = paragraph.add_run(line_part)
                 run.bold, run.underline = is_bold, is_underline
                 run.font.name, run.font.size = 'Arial', Pt(11)
+                logger.debug(f"Added run: {line_part}, bold={is_bold}, underline={is_underline}")
 
 def should_render_track_block(tag, claim_assigned, selected_track):
     tag_map = {
@@ -227,6 +235,7 @@ def process_precedent_text(precedent_content, app_inputs, placeholder_map):
                 continue
 
             content = element['content_lines'][0] if element['content_lines'] else ""
+            logger.debug(f"Processing element: {element['type']}, content: {content}")
             
             def add_list_item(level, text):
                 p = doc.add_paragraph()
