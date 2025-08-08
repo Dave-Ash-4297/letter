@@ -17,10 +17,11 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 INDENT_FOR_IND_TAG_CM = 1.25
-MAIN_LIST_TEXT_START_CM = 1.0  # Adjusted for main paragraphs
-MARKER_OFFSET_CM = 0.5  # Adjusted for better marker alignment
-SUB_LIST_TEXT_START_CM = 1.5  # Adjusted for sub-paragraphs
-SUB_ROMAN_TEXT_START_CM = 2.0  # Adjusted for sub-sub-paragraphs
+MAIN_LIST_TEXT_START_CM = 1.0  # For top-level paragraphs
+SUB_LIST_TEXT_START_CM = 1.0   # Left indent for sub-paragraphs
+SUB_LIST_HANGING_CM = 2.0      # Hanging indent for sub-paragraphs
+SUB_ROMAN_TEXT_START_CM = 1.5  # Left indent for sub-sub-paragraphs
+SUB_ROMAN_HANGING_CM = 2.5     # Hanging indent for sub-sub-paragraphs
 
 def sanitize_input(text):
     if not isinstance(text, str): text = str(text)
@@ -134,51 +135,80 @@ def generate_initial_advice_doc(app_inputs, placeholder_map):
     return doc_io
 
 def preprocess_precedent(precedent_content, app_inputs):
-    logical_elements, lines, i, current_block_tag, list_counter, letter_counter, roman_counter = [], precedent_content.splitlines(), 0, None, 0, 0, 0
-    while i < len(lines):
-        line, stripped_line = lines[i], lines[i].strip()
-        match_start_tag = re.match(r'^\[(indiv|corp|a[1-4]|u[1-4])\]$', stripped_line)
-        match_end_tag = re.match(r'^\[/(indiv|corp|a[1-4]|u[1-4])\]$', stripped_line)
-        match_heading = re.match(r'^<ins>(.*)</ins>$', stripped_line)
-        match_numbered_list = re.match(r'^\d+\.\s*(.*)', stripped_line)
-        match_letter_list = re.match(r'^<a>\s*(.*)', stripped_line)
-        match_roman_list = re.match(r'^<i>\s*(.*)', stripped_line)
-        match_fee_table = re.match(r'^\[FEE_TABLE_PLACEHOLDER\]$', stripped_line)
-        element = None
-        
-        if match_start_tag:
-            current_block_tag = match_start_tag.group(1)
-            list_counter = letter_counter = roman_counter = 0  # Reset all counters at block start
-        elif match_end_tag:
-            current_block_tag = None
-            list_counter = letter_counter = roman_counter = 0  # Reset all counters at block end
-        elif match_fee_table:
-            element = {'type': 'fee_table', 'content_lines': [], 'block_tag': current_block_tag}
-        elif match_heading:
-            element = {'type': 'heading', 'content_lines': [match_heading.group(1)], 'block_tag': current_block_tag}
-            list_counter = letter_counter = roman_counter = 0  # Reset all counters on heading
-        elif match_numbered_list:
-            list_counter += 1
-            element = {'type': 'numbered_list_item', 'content_lines': [match_numbered_list.group(1)], 'number': list_counter, 'block_tag': current_block_tag}
-            logger.info(f"Processing numbered list item {list_counter}: {match_numbered_list.group(1)}")
-            letter_counter = roman_counter = 0  # Reset sub-level counters
-        elif match_letter_list:
-            letter_counter += 1
-            element = {'type': 'letter_list_item', 'content_lines': [match_letter_list.group(1)], 'number': letter_counter, 'block_tag': current_block_tag}
-            logger.info(f"Processing letter list item {chr(96 + letter_counter)}: {match_letter_list.group(1)}")
-            roman_counter = 0  # Reset roman counter
-        elif match_roman_list:
-            roman_counter += 1
-            element = {'type': 'roman_list_item', 'content_lines': [match_roman_list.group(1)], 'number': roman_counter, 'block_tag': current_block_tag}
-            logger.info(f"Processing roman list item {roman_counter}: {match_roman_list.group(1)}")
-        elif not stripped_line:
-            element = {'type': 'blank_line', 'content_lines': [], 'block_tag': current_block_tag}
+    logical_elements = []
+    lines = precedent_content.splitlines()
+    i = 0
+    current_block_tag = None
+    block_lines = []
+    current_list_type = None  # Track list type: 'numbered', 'letter', 'roman'
+
+    def determine_list_type(line):
+        line = line.strip()
+        if line.startswith('<a>'):
+            return 'letter'
+        elif line.startswith('<i>'):
+            return 'roman'
+        elif line.startswith('1.'):
+            return 'numbered'
+        return None
+
+    def flush_block(block_tag, block_lines, list_type):
+        if not block_lines:
+            return
+        content = block_lines[0].strip() if block_lines else ""
+        if not content:
+            logical_elements.append({'type': 'blank_line', 'content_lines': [], 'block_tag': block_tag, 'list_type': None})
+        elif '<ins>' in content:
+            logical_elements.append({'type': 'heading', 'content_lines': block_lines, 'block_tag': block_tag, 'list_type': None})
+        elif '[FEE_TABLE_PLACEHOLDER]' in content:
+            logical_elements.append({'type': 'fee_table', 'content_lines': block_lines, 'block_tag': block_tag, 'list_type': None})
         else:
-            element = {'type': 'general_paragraph', 'content_lines': [line], 'block_tag': current_block_tag}
-            
-        if element:
-            logical_elements.append(element)
-        i += 1
+            element_type = list_type or 'general_paragraph'
+            logical_elements.append({
+                'type': element_type,
+                'content_lines': block_lines,
+                'block_tag': block_tag,
+                'list_type': list_type
+            })
+
+    while i < len(lines):
+        line = lines[i].strip()
+        match_start_tag = re.match(r'^\[(indiv|corp|a[1-4]|u[1-4])\]$', line)
+        match_end_tag = re.match(r'^\[/(indiv|corp|a[1-4]|u[1-4])\]$', line)
+        if match_start_tag:
+            if block_lines and current_block_tag is None:
+                flush_block(None, block_lines, current_list_type)
+                block_lines = []
+            current_block_tag = match_start_tag.group(1)
+            i += 1
+            continue
+        elif match_end_tag:
+            if block_lines and current_block_tag == match_end_tag.group(1):
+                flush_block(current_block_tag, block_lines, current_list_type)
+                block_lines = []
+            current_block_tag = None
+            current_list_type = None
+            i += 1
+            continue
+        else:
+            if line:
+                new_list_type = determine_list_type(line)
+                if new_list_type and new_list_type != current_list_type:
+                    if block_lines:
+                        flush_block(current_block_tag, block_lines, current_list_type)
+                        block_lines = []
+                    current_list_type = new_list_type
+                block_lines.append(lines[i])
+            else:
+                if block_lines:
+                    flush_block(current_block_tag, block_lines, current_list_type)
+                    block_lines = []
+                logical_elements.append({'type': 'blank_line', 'content_lines': [], 'block_tag': current_block_tag, 'list_type': None})
+            i += 1
+
+    if block_lines:
+        flush_block(current_block_tag, block_lines, current_list_type)
+
     return logical_elements
 
 def process_precedent_text(precedent_content, app_inputs, placeholder_map):
@@ -191,7 +221,7 @@ def process_precedent_text(precedent_content, app_inputs, placeholder_map):
         abstract_num = OxmlElement('w:abstractNum')
         abstract_num.set(qn('w:abstractNumId'), str(abstract_num_id))
 
-        def create_level(ilvl, numFmt, lvlText, left_indent, start_val=1):
+        def create_level(ilvl, numFmt, lvlText, left_indent_cm, hanging_cm, start_val=1):
             lvl = OxmlElement('w:lvl')
             lvl.set(qn('w:ilvl'), str(ilvl))
             numFmt_el = OxmlElement('w:numFmt')
@@ -205,15 +235,18 @@ def process_precedent_text(precedent_content, app_inputs, placeholder_map):
             lvl.append(start_el)
             pPr = OxmlElement('w:pPr')
             ind = OxmlElement('w:ind')
-            ind.set(qn('w:left'), str(left_indent.twips))
-            ind.set(qn('w:hanging'), str(Cm(MARKER_OFFSET_CM).twips))
+            ind.set(qn('w:left'), str(Cm(left_indent_cm).twips))
+            ind.set(qn('w:hanging'), str(Cm(hanging_cm).twips))
             pPr.append(ind)
             lvl.append(pPr)
             return lvl
 
-        abstract_num.append(create_level(0, 'decimal', '%1.', Cm(MAIN_LIST_TEXT_START_CM), start_val=1))
-        abstract_num.append(create_level(1, 'lowerLetter', '(%2)', Cm(SUB_LIST_TEXT_START_CM), start_val=1))
-        abstract_num.append(create_level(2, 'lowerRoman', '(%3)', Cm(SUB_ROMAN_TEXT_START_CM), start_val=1))
+        # Level 0: Numbered list (1.), left margin (0cm), text at 1cm (hanging 1cm)
+        abstract_num.append(create_level(0, 'decimal', '%1.', 0, 1.0, start_val=1))
+        # Level 1: Letter list (a), left at 1cm, text at 2cm (hanging 1cm)
+        abstract_num.append(create_level(1, 'lowerLetter', '(%2)', SUB_LIST_TEXT_START_CM, 1.0, start_val=1))
+        # Level 2: Roman list (i), left at 1.5cm, text at 2.5cm (hanging 1cm)
+        abstract_num.append(create_level(2, 'lowerRoman', '(%3)', SUB_ROMAN_TEXT_START_CM, 1.0, start_val=1))
         numbering_elm.append(abstract_num)
 
         num = OxmlElement('w:num')
@@ -228,33 +261,33 @@ def process_precedent_text(precedent_content, app_inputs, placeholder_map):
             render_this_element = True
             tag = element.get('block_tag')
             if tag:
-                if tag in ['indiv', 'corp']:
-                    render_this_element = (tag == 'indiv' and app_inputs['client_type'] == 'Individual') or \
-                                          (tag == 'corp' and app_inputs['client_type'] == 'Corporate')
+                if tag == 'indiv':
+                    render_this_element = app_inputs['client_type'] == 'Individual'
+                elif tag == 'corp':
+                    render_this_element = app_inputs['client_type'] == 'Corporate'
                 else:
                     render_this_element = should_render_track_block(tag, app_inputs['claim_assigned'], app_inputs['selected_track'])
-            
             if not render_this_element:
                 continue
 
             content = element['content_lines'][0] if element['content_lines'] else ""
             logger.debug(f"Processing element: {element['type']}, content: {content}")
-            
+
             def add_list_item(level, text):
                 p = doc.add_paragraph()
                 pPr = p._p.get_or_add_pPr()
                 numPr = pPr.get_or_add_numPr()
                 numPr.get_or_add_ilvl().val = level
                 numPr.get_or_add_numId().val = num_instance_id
-                add_formatted_runs(p, text, placeholder_map)
+                cleaned_content = text.replace('<a>', '').replace('<i>', '').strip()
+                add_formatted_runs(p, cleaned_content, placeholder_map)
                 p.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
                 p.paragraph_format.space_after = Pt(6)
-                logger.info(f"Added list item at level {level}: {text}")
+                logger.info(f"Added list item at level {level}: {cleaned_content}")
 
             if element['type'] == 'blank_line':
                 continue
             elif element['type'] == 'fee_table':
-                 # Add the fee table here
                 table = doc.add_table(rows=5, cols=2)
                 table.style = 'Table Grid'
                 fee_data = [
@@ -267,18 +300,17 @@ def process_precedent_text(precedent_content, app_inputs, placeholder_map):
                 for i, (grade, rate) in enumerate(fee_data):
                     table.rows[i].cells[0].text = grade
                     table.rows[i].cells[1].text = rate
-                # Add space after the table
                 doc.add_paragraph().paragraph_format.space_after = Pt(12)
             elif element['type'] == 'heading':
                 p = doc.add_paragraph()
-                add_formatted_runs(p, f"<ins>{content}</ins>", placeholder_map)
+                add_formatted_runs(p, content, placeholder_map)
                 p.paragraph_format.space_before = Pt(12)
                 p.paragraph_format.space_after = Pt(6)
-            elif element['type'] == 'numbered_list_item':
+            elif element['type'] == 'numbered':
                 add_list_item(0, content)
-            elif element['type'] == 'letter_list_item':
+            elif element['type'] == 'letter':
                 add_list_item(1, content)
-            elif element['type'] == 'roman_list_item':
+            elif element['type'] == 'roman':
                 add_list_item(2, content)
             elif element['type'] == 'general_paragraph':
                 p = doc.add_paragraph()
