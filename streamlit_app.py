@@ -1,16 +1,3 @@
-Of course, I can help you fix that `SyntaxError`.
-
-The error is caused by a single line of invalid text, `</xaiArtifact>`, at the very end of your `streamlit_app.py` file. This is not valid Python code and was likely added accidentally.
-
-Simply removing that line will resolve the `SyntaxError`. Below is the complete, corrected script.
-
------
-
-### Corrected `streamlit_app.py`
-
-I have removed the erroneous final line. I also noticed a placeholder, `[FEE_TABLE_PLACEHOLDER]`, in your `precedent.txt` that wasn't being replaced. I've added a basic table to the generated document to fill this in.
-
-```python
 import streamlit as st
 from docx import Document
 from docx.shared import Pt, Cm
@@ -419,4 +406,3 @@ if submitted:
     except Exception as e:
         st.error(f"An error occurred while building the documents: {e}")
         logger.exception("Error during document generation:")
-        
