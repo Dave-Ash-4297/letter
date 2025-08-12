@@ -1,4 +1,3 @@
-```python
 import streamlit as st
 from docx import Document
 from docx.shared import Pt, Cm
@@ -434,4 +433,3 @@ if submitted:
     except Exception as e:
         st.error(f"An error occurred while building the documents: {e}")
         logger.exception("Error during document generation:")
-```
