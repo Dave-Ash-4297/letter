@@ -1,3 +1,4 @@
+```python
 import streamlit as st
 from docx import Document
 from docx.shared import Pt, Cm
@@ -17,11 +18,6 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 INDENT_FOR_IND_TAG_CM = 1.25
-MAIN_LIST_TEXT_START_CM = 1.0  # For top-level paragraphs
-SUB_LIST_TEXT_START_CM = 1.0   # Left indent for sub-paragraphs
-SUB_LIST_HANGING_CM = 2.0      # Hanging indent for sub-paragraphs
-SUB_ROMAN_TEXT_START_CM = 1.5  # Left indent for sub-sub-paragraphs
-SUB_ROMAN_HANGING_CM = 2.5     # Hanging indent for sub-sub-paragraphs
 
 def sanitize_input(text):
     if not isinstance(text, str): text = str(text)
@@ -241,12 +237,12 @@ def process_precedent_text(precedent_content, app_inputs, placeholder_map):
             lvl.append(pPr)
             return lvl
 
-        # Level 0: Numbered list (1.), left margin (0cm), text at 1cm (hanging 1cm)
-        abstract_num.append(create_level(0, 'decimal', '%1.', 0, 1.0, start_val=1))
-        # Level 1: Letter list (a), left at 1cm, text at 2cm (hanging 1cm)
-        abstract_num.append(create_level(1, 'lowerLetter', '(%2)', SUB_LIST_TEXT_START_CM, 1.0, start_val=1))
-        # Level 2: Roman list (i), left at 1.5cm, text at 2.5cm (hanging 1cm)
-        abstract_num.append(create_level(2, 'lowerRoman', '(%3)', SUB_ROMAN_TEXT_START_CM, 1.0, start_val=1))
+        # Level 0: Numbered list (1.), text at 0.8cm, hanging 0.8cm (label at 0cm)
+        abstract_num.append(create_level(0, 'decimal', '%1.', 0.8, 0.8, start_val=1))
+        # Level 1: Letter list (a.), text at 1.6cm, hanging 0.8cm (label at 0.8cm)
+        abstract_num.append(create_level(1, 'lowerLetter', '%2.', 1.6, 0.8, start_val=1))
+        # Level 2: Roman list (i.), text at 2.4cm, hanging 0.8cm (label at 1.6cm)
+        abstract_num.append(create_level(2, 'lowerRoman', '%3.', 2.4, 0.8, start_val=1))
         numbering_elm.append(abstract_num)
 
         num = OxmlElement('w:num')
@@ -279,7 +275,7 @@ def process_precedent_text(precedent_content, app_inputs, placeholder_map):
                 numPr = pPr.get_or_add_numPr()
                 numPr.get_or_add_ilvl().val = level
                 numPr.get_or_add_numId().val = num_instance_id
-                cleaned_content = text.replace('<a>', '').replace('<i>', '').strip()
+                cleaned_content = re.sub(r'^(<[ai]>|\d+\.)\s*', '', text).strip()
                 add_formatted_runs(p, cleaned_content, placeholder_map)
                 p.paragraph_format.alignment = WD_PARAGRAPH_ALIGNMENT.JUSTIFY
                 p.paragraph_format.space_after = Pt(6)
@@ -438,3 +434,4 @@ if submitted:
     except Exception as e:
         st.error(f"An error occurred while building the documents: {e}")
         logger.exception("Error during document generation:")
+```
